@@ -68,8 +68,9 @@ Pastikan sistem Anda memiliki:
 ### 🔧 Kloning Repositori
 
 ```bash
-git clone https://github.com/anraaa/dw
+git clone https://github.com/Anraaa/dw.git
 cd dw
+cd project_etl_akademik
 ```
 
 ### 📦 Buat & Aktifkan Virtual Environment
