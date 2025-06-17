@@ -3,7 +3,10 @@ import mysql.connector
 from mysql.connector import Error
 import matplotlib.pyplot as plt
 import plotly.express as px
+import numpy as np
 from datetime import datetime
+import seaborn as sns
+from matplotlib import gridspec
 
 # =============================================
 # 1. EXTRACT (Mengambil Data dari Berbagai Sumber)
@@ -12,54 +15,106 @@ def extract_data():
     """Fungsi untuk mengekstrak data dari berbagai sumber sistem akademik"""
     print("\n[1] Extracting data from multiple sources...")
     
-    # 1. Data Mahasiswa (dari database akademik)
+    # 1. Data Mahasiswa (dari database akademik) - expanded to 15 records
     data_mahasiswa = {
-        'nim': ['10120201', '10120202', '10120203', '10220201', '10320201'],
-        'nama': ['Andi Wijaya', 'Budi Santoso', 'Citra Lestari', 'Dian Pratama', 'Eka Surya'],
-        'fakultas': ['Teknik', 'Teknik', 'Ekonomi', 'Sains', 'Ekonomi'],
-        'prodi': ['Informatika', 'Informatika', 'Manajemen', 'Fisika', 'Akuntansi'],
-        'tahun_masuk': [2020, 2020, 2021, 2020, 2021],
-        'status_beasiswa': ['Ya', 'Tidak', 'Ya', 'Tidak', 'Ya']
+        'nim': ['10120201', '10120202', '10120203', '10120204', '10120205', 
+                '10220201', '10220202', '10220203', '10320201', '10320202',
+                '10420201', '10420202', '10520201', '10520202', '10520203'],
+        'nama': ['Andi Wijaya', 'Budi Santoso', 'Citra Lestari', 'Dian Pratama', 'Eka Surya',
+                 'Fajar Nugroho', 'Gita Permata', 'Hadi Prabowo', 'Indra Setiawan', 'Joko Susilo',
+                 'Kartika Dewi', 'Lina Marlina', 'Mega Wati', 'Nando Pratama', 'Oki Setiawan'],
+        'fakultas': ['Teknik', 'Teknik', 'Teknik', 'Teknik', 'Teknik',
+                     'Ekonomi', 'Ekonomi', 'Ekonomi', 'Ekonomi', 'Ekonomi',
+                     'Sains', 'Sains', 'Hukum', 'Hukum', 'Hukum'],
+        'prodi': ['Informatika', 'Informatika', 'Sistem Informasi', 'Teknik Elektro', 'Teknik Mesin',
+                  'Manajemen', 'Manajemen', 'Akuntansi', 'Akuntansi', 'Ekonomi Pembangunan',
+                  'Fisika', 'Matematika', 'Hukum Perdata', 'Hukum Pidana', 'Hukum Internasional'],
+        'tahun_masuk': [2020, 2020, 2021, 2020, 2021, 
+                        2020, 2021, 2021, 2020, 2021,
+                        2020, 2021, 2020, 2021, 2021],
+        'status_beasiswa': ['Ya', 'Tidak', 'Ya', 'Tidak', 'Ya',
+                           'Ya', 'Tidak', 'Ya', 'Tidak', 'Ya',
+                           'Tidak', 'Ya', 'Tidak', 'Ya', 'Tidak']
     }
     df_mahasiswa = pd.DataFrame(data_mahasiswa)
     
-    # 2. Data Mata Kuliah (dari sistem kurikulum)
+    # 2. Data Mata Kuliah (dari sistem kurikulum) - expanded
     data_matakuliah = {
-        'kode_mk': ['INF101', 'INF102', 'MAN201', 'FIS101', 'AKU301'],
-        'nama_mk': ['Basis Data', 'Algoritma', 'Manajemen Keuangan', 'Fisika Dasar', 'Akuntansi Lanjut'],
-        'sks': [3, 4, 3, 4, 3],
-        'semester_mk': [3, 2, 4, 1, 5]  # semester dalam kurikulum
+        'kode_mk': ['INF101', 'INF102', 'INF201', 'INF202', 'ELE101',
+                    'MAN201', 'MAN202', 'AKU301', 'AKU302', 'EKO101',
+                    'FIS101', 'MAT101', 'HUK101', 'HUK102', 'HUK201'],
+        'nama_mk': ['Basis Data', 'Algoritma', 'Pemrograman Web', 'Kecerdasan Buatan', 'Rangkaian Listrik',
+                    'Manajemen Keuangan', 'Manajemen Pemasaran', 'Akuntansi Lanjut', 'Auditing', 'Ekonomi Makro',
+                    'Fisika Dasar', 'Kalkulus', 'Hukum Perdata', 'Hukum Pidana', 'Hukum Dagang'],
+        'sks': [3, 4, 3, 4, 3,
+                3, 3, 3, 4, 3,
+                4, 4, 3, 3, 4],
+        'semester_mk': [3, 2, 4, 5, 3,
+                        4, 5, 5, 6, 3,
+                        1, 1, 2, 2, 4]
     }
     df_matakuliah = pd.DataFrame(data_matakuliah)
     
-    # 3. Data Dosen (dari sistem SDM)
+    # 3. Data Dosen (dari sistem SDM) - expanded
     data_dosen = {
-        'nidn': ['001203', '001204', '002101', '003102', '003201'],
-        'nama_dosen': ['Dr. Ahmad Sanusi', 'Prof. Bambang Setiawan', 'Dr. Citra Dewi', 'Dr. Dodi Pratomo', 'Dr. Erni Wulandari'],
-        'jabatan': ['Lektor', 'Guru Besar', 'Lektor', 'Asisten Ahli', 'Lektor'],
-        'fakultas': ['Teknik', 'Teknik', 'Ekonomi', 'Sains', 'Ekonomi']
+        'nidn': ['001203', '001204', '001205', '001206', '001207',
+                 '002101', '002102', '002103', '003102', '003201',
+                 '004101', '004102', '005101', '005102', '005103'],
+        'nama_dosen': ['Dr. Ahmad Sanusi', 'Prof. Bambang Setiawan', 'Dr. Citra Dewi', 'Dr. Dodi Pratomo', 'Dr. Erni Wulandari',
+                       'Dr. Farid Hidayat', 'Dr. Gita Kusuma', 'Dr. Hadi Pranoto', 'Dr. Indra Gunawan', 'Dr. Joko Susanto',
+                       'Dr. Kartika Sari', 'Dr. Lina Marlina', 'Dr. Mega Wati', 'Dr. Nando Pratama', 'Dr. Oki Setiawan'],
+        'jabatan': ['Lektor', 'Guru Besar', 'Lektor', 'Asisten Ahli', 'Lektor',
+                    'Lektor', 'Asisten Ahli', 'Guru Besar', 'Lektor', 'Lektor',
+                    'Asisten Ahli', 'Lektor', 'Guru Besar', 'Lektor', 'Asisten Ahli'],
+        'fakultas': ['Teknik', 'Teknik', 'Teknik', 'Teknik', 'Teknik',
+                     'Ekonomi', 'Ekonomi', 'Ekonomi', 'Sains', 'Ekonomi',
+                     'Sains', 'Sains', 'Hukum', 'Hukum', 'Hukum']
     }
     df_dosen = pd.DataFrame(data_dosen)
     
-    # 4. Data Nilai (dari sistem KRS dan nilai)
+    # 4. Data Nilai (dari sistem KRS dan nilai) - expanded
     data_nilai = {
-        'nim': ['10120201', '10120201', '10120202', '10120203', '10220201', '10320201'],
-        'kode_mk': ['INF101', 'INF102', 'INF101', 'MAN201', 'FIS101', 'AKU301'],
-        'nidn_dosen': ['001203', '001204', '001203', '002101', '003102', '003201'],
-        'tahun_ajaran': ['2021/2022', '2021/2022', '2021/2022', '2022/2023', '2022/2023', '2022/2023'],
-        'semester': ['Ganjil', 'Genap', 'Ganjil', 'Ganjil', 'Genap', 'Ganjil'],
-        'nilai_akhir': [85, 78, 90, 82, 75, 88],
-        'status_kelulusan': ['Lulus', 'Lulus', 'Lulus', 'Lulus', 'Lulus', 'Lulus']
+        'nim': ['10120201', '10120201', '10120202', '10120203', '10120204', '10120205',
+                '10220201', '10220202', '10220203', '10320201', '10320202',
+                '10420201', '10420202', '10520201', '10520202', '10520203'],
+        'kode_mk': ['INF101', 'INF102', 'INF101', 'INF201', 'ELE101', 'INF102',
+                    'MAN201', 'MAN202', 'AKU301', 'AKU302', 'EKO101',
+                    'FIS101', 'MAT101', 'HUK101', 'HUK102', 'HUK201'],
+        'nidn_dosen': ['001203', '001204', '001203', '001205', '001206', '001204',
+                       '002101', '002102', '002103', '003201', '003102',
+                       '004101', '004102', '005101', '005102', '005103'],
+        'tahun_ajaran': ['2021/2022', '2021/2022', '2021/2022', '2022/2023', '2022/2023', '2022/2023',
+                         '2022/2023', '2022/2023', '2022/2023', '2022/2023', '2022/2023',
+                         '2022/2023', '2022/2023', '2022/2023', '2022/2023', '2022/2023'],
+        'semester': ['Ganjil', 'Genap', 'Ganjil', 'Ganjil', 'Genap', 'Ganjil',
+                     'Ganjil', 'Genap', 'Ganjil', 'Ganjil', 'Genap',
+                     'Ganjil', 'Genap', 'Ganjil', 'Genap', 'Ganjil'],
+        'nilai_akhir': [85, 78, 90, 82, 75, 88,
+                         77, 82, 85, 79, 91,
+                         68, 72, 80, 85, 78],
+        'status_kelulusan': ['Lulus', 'Lulus', 'Lulus', 'Lulus', 'Lulus', 'Lulus',
+                             'Lulus', 'Lulus', 'Lulus', 'Lulus', 'Lulus',
+                             'Lulus', 'Lulus', 'Lulus', 'Lulus', 'Lulus']
     }
     df_nilai = pd.DataFrame(data_nilai)
     
-    # 5. Data Keuangan (dari sistem keuangan)
+    # 5. Data Keuangan (dari sistem keuangan) - expanded
     data_keuangan = {
-        'nim': ['10120201', '10120202', '10120203', '10220201', '10320201'],
-        'tahun_ajaran': ['2022/2023', '2022/2023', '2022/2023', '2022/2023', '2022/2023'],
-        'semester_keuangan': ['Ganjil', 'Ganjil', 'Ganjil', 'Ganjil', 'Ganjil'],
-        'total_pembayaran': [7500000, 7500000, 6500000, 7000000, 6500000],
-        'status_pembayaran': ['Lunas', 'Lunas', 'Lunas', 'Cicilan', 'Lunas']
+        'nim': ['10120201', '10120202', '10120203', '10120204', '10120205',
+                '10220201', '10220202', '10220203', '10320201', '10320202',
+                '10420201', '10420202', '10520201', '10520202', '10520203'],
+        'tahun_ajaran': ['2022/2023', '2022/2023', '2022/2023', '2022/2023', '2022/2023',
+                         '2022/2023', '2022/2023', '2022/2023', '2022/2023', '2022/2023',
+                         '2022/2023', '2022/2023', '2022/2023', '2022/2023', '2022/2023'],
+        'semester_keuangan': ['Ganjil', 'Ganjil', 'Ganjil', 'Ganjil', 'Ganjil',
+                              'Ganjil', 'Ganjil', 'Ganjil', 'Ganjil', 'Ganjil',
+                              'Ganjil', 'Ganjil', 'Ganjil', 'Ganjil', 'Ganjil'],
+        'total_pembayaran': [7500000, 7500000, 7500000, 7500000, 7500000,
+                             6500000, 6500000, 6500000, 6500000, 6500000,
+                             7000000, 7000000, 7000000, 7000000, 7000000],
+        'status_pembayaran': ['Lunas', 'Lunas', 'Cicilan', 'Lunas', 'Lunas',
+                              'Lunas', 'Cicilan', 'Lunas', 'Lunas', 'Cicilan',
+                              'Lunas', 'Lunas', 'Cicilan', 'Lunas', 'Lunas']
     }
     df_keuangan = pd.DataFrame(data_keuangan)
     
@@ -119,11 +174,15 @@ def transform_data(df_mahasiswa, df_matakuliah, df_dosen, df_nilai, df_keuangan)
     df_ipk_final['ipk'] = df_ipk_final['total_point'] / df_ipk_final['sks']
     df_ipk_final = pd.merge(df_ipk_final, df_mahasiswa, on='nim', how='left')
     
-    # 6. Menghitung statistik fakultas
-    df_statistik_fakultas = df_ipk_final.groupby('fakultas').agg(
+    # 6. Menghitung statistik fakultas dengan jumlah mahasiswa beasiswa
+    # Gabungkan data IPK dengan data mahasiswa terlebih dahulu
+    df_mahasiswa_with_ipk = pd.merge(df_mahasiswa, df_ipk_final[['nim', 'ipk']], on='nim', how='left')
+    
+    df_statistik_fakultas = df_mahasiswa_with_ipk.groupby('fakultas').agg(
         jumlah_mahasiswa=('nim', 'count'),
-        rata_ipk=('ipk', 'mean'),
-        persen_beasiswa=('status_beasiswa', lambda x: (x == 'Ya').mean() * 100)
+        jumlah_beasiswa=('status_beasiswa', lambda x: (x == 'Ya').sum()),
+        jumlah_tanpa_beasiswa=('status_beasiswa', lambda x: (x == 'Tidak').sum()),
+        rata_ipk=('ipk', 'mean')
     ).reset_index()
     
     print("Data transformation completed successfully!")
@@ -243,7 +302,7 @@ def create_database_tables(connection):
     finally:
         if cursor:
             cursor.close()
-
+    
 def load_to_dw(df, table_name, connection):
     """Memuat data ke tabel data warehouse"""
     try:
@@ -315,44 +374,248 @@ def load_to_dw(df, table_name, connection):
             cursor.close()
             
 # =============================================
-# 4. VISUALISASI (Analisis Data Akademik)
+# 4. VISUALISASI (Analisis Data Akademik) - ENHANCED
 # =============================================
 def visualize_data(df_ipk, df_statistik_fakultas):
-    """Fungsi untuk membuat visualisasi data"""
-    print("\n[4] Generating data visualizations...")
+    """Fungsi untuk visualisasi data dengan detail per mahasiswa dan analisis beasiswa"""
+    print("\n[4] Generating enhanced student-level visualizations with scholarship analysis...")
     
-    # 1. Visualisasi IPK per Fakultas
-    plt.figure(figsize=(10, 6))
-    df_statistik_fakultas.sort_values('rata_ipk', ascending=True).plot(
-        kind='barh', x='fakultas', y='rata_ipk', 
-        color=['skyblue', 'lightgreen', 'salmon'], legend=False)
-    plt.title('Rata-Rata IPK per Fakultas', pad=20)
-    plt.xlabel('IPK')
-    plt.ylabel('Fakultas')
-    plt.xlim(0, 4)
-    plt.grid(axis='x', linestyle='--', alpha=0.7)
-    plt.tight_layout()
-    plt.show()
-    
-    # 2. Persentase Penerima Beasiswa per Fakultas
-    plt.figure(figsize=(10, 6))
-    df_statistik_fakultas.sort_values('persen_beasiswa', ascending=True).plot(
-        kind='barh', x='fakultas', y='persen_beasiswa',
-        color=['gold', 'lightcoral', 'lightblue'])
-    plt.title('Persentase Penerima Beasiswa per Fakultas', pad=20)
-    plt.xlabel('Persentase (%)')
-    plt.ylabel('Fakultas')
-    plt.xlim(0, 100)
-    plt.grid(axis='x', linestyle='--', alpha=0.7)
-    plt.tight_layout()
-    plt.show()
-    
-    # 3. Interaktif: Distribusi IPK Mahasiswa
-    fig = px.box(df_ipk, x='prodi', y='ipk', color='fakultas',
-                 title='Distribusi IPK Mahasiswa per Program Studi',
-                 hover_data=['nama', 'tahun_masuk'])
-    fig.update_layout(xaxis_title='Program Studi', yaxis_title='IPK')
-    fig.show()
+    try:
+        # Set style
+        plt.style.use('seaborn-v0_8-darkgrid')
+        plt.rcParams['font.family'] = 'DejaVu Sans'
+        colors = ['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6']
+        
+        # Calculate minimum IPK for scholarship
+        min_ipk_beasiswa = df_ipk[df_ipk['status_beasiswa'] == 'Ya']['ipk'].min()
+        
+        # =============================================
+        # 1. COMPREHENSIVE IPK AND SCHOLARSHIP ANALYSIS
+        # =============================================
+        plt.figure(figsize=(18, 12))
+        plt.suptitle('ANALISIS LENGKAP IPK DAN BEASISWA PER FAKULTAS', y=1.02, fontsize=16, fontweight='bold')
+        
+        # Create grid layout
+        gs = gridspec.GridSpec(2, 2, height_ratios=[1.2, 1], width_ratios=[2, 1])
+        ax1 = plt.subplot(gs[0, 0])  # Distribution plot
+        ax2 = plt.subplot(gs[0, 1])  # Stats panel
+        ax3 = plt.subplot(gs[1, 0])  # Scholarship status
+        ax4 = plt.subplot(gs[1, 1])  # Student table
+        
+        # --------------------------
+        # Distribution Plot (Violin + Box + Swarm)
+        # --------------------------
+        sns.violinplot(x='fakultas', y='ipk', data=df_ipk, palette=colors, 
+                      inner=None, ax=ax1, cut=0, width=0.8)
+        sns.boxplot(x='fakultas', y='ipk', data=df_ipk, color='black',
+                   width=0.15, ax=ax1, boxprops={'facecolor':'none'})
+        sns.swarmplot(x='fakultas', y='ipk', hue='status_beasiswa',
+                     data=df_ipk, palette={'Ya':'#27ae60', 'Tidak':'#e74c3c'},
+                     size=5, edgecolor='gray', linewidth=0.5, ax=ax1)
+        
+        ax1.axhline(y=min_ipk_beasiswa, color='#f39c12', linestyle='--', linewidth=2)
+        ax1.text(0.5, min_ipk_beasiswa+0.05, 
+                f"IPK Minimum Beasiswa: {min_ipk_beasiswa:.2f}",
+                color='#f39c12', fontweight='bold', ha='center')
+        
+        ax1.set_title('DISTRIBUSI IPK DAN STATUS BEASISWA\n(Violin: density, Box: quartile, Titik: mahasiswa)',
+                     pad=15, fontsize=12)
+        ax1.set_xlabel('Fakultas', fontsize=12)
+        ax1.set_ylabel('IPK', fontsize=12)
+        ax1.set_ylim(1.5, 4.0)
+        ax1.legend(title='Status Beasiswa', bbox_to_anchor=(1, 1))
+        
+        # --------------------------
+        # Statistical Information Panel
+        # --------------------------
+        ax2.axis('off')
+        
+        stats_text = "STATISTIK UTAMA:\n\n"
+        for faculty in df_ipk['fakultas'].unique():
+            faculty_data = df_ipk[df_ipk['fakultas'] == faculty]
+            beasiswa = faculty_data[faculty_data['status_beasiswa'] == 'Ya']
+            tidak = faculty_data[faculty_data['status_beasiswa'] == 'Tidak']
+            
+            stats_text += (
+                f"{faculty.upper()}:\n"
+                f"- Total: {len(faculty_data)} mahasiswa\n"
+                f"- Dapat: {len(beasiswa)} ({len(beasiswa)/len(faculty_data)*100:.1f}%)\n"
+                f"- IPK Min: {beasiswa['ipk'].min():.2f}\n"
+                f"- IPK Rata2: {beasiswa['ipk'].mean():.2f}\n"
+                f"- Tidak Dapat:\n"
+                f"  • IPK < {min_ipk_beasiswa:.2f}: {len(tidak[tidak['ipk'] < min_ipk_beasiswa])}\n"
+                f"  • Kuota penuh: {len(tidak[tidak['ipk'] >= min_ipk_beasiswa])}\n\n"
+            )
+        
+        ax2.text(0.1, 0.1, stats_text, fontsize=10, 
+                bbox=dict(facecolor='white', alpha=0.8, edgecolor='gray', boxstyle='round'),
+                va='bottom')
+        
+        # --------------------------
+        # Scholarship Status Analysis
+        # --------------------------
+        df_eligible = df_ipk.copy()
+        df_eligible['Status'] = np.where(
+            df_eligible['status_beasiswa'] == 'Ya', 'Dapat',
+            np.where(
+                df_eligible['ipk'] < min_ipk_beasiswa,
+                f'Tidak (IPK < {min_ipk_beasiswa:.2f})',
+                'Tidak (Kuota)'
+            )
+        )
+        
+        status_counts = df_eligible.groupby(['fakultas', 'Status']).size().unstack()
+        status_counts.plot(kind='barh', stacked=True, 
+                         color=['#27ae60', '#e74c3c', '#f39c12'],
+                         ax=ax3)
+        
+        for i, (idx, row) in enumerate(status_counts.iterrows()):
+            total = row.sum()
+            cumulative = 0
+            for val in row:
+                if val > 0:
+                    ax3.text(cumulative + val/2, i, 
+                            f"{val} ({val/total*100:.1f}%)",
+                            va='center', ha='center',
+                            color='white', fontweight='bold')
+                    cumulative += val
+        
+        ax3.set_title('DISTRIBUSI STATUS BEASISWA', pad=15, fontsize=12)
+        ax3.set_xlabel('Jumlah Mahasiswa')
+        ax3.legend(title='Keterangan')
+        
+        # --------------------------
+        # Detailed Student Table
+        # --------------------------
+        ax4.axis('off')
+        
+        table_data = []
+        for faculty in df_ipk['fakultas'].unique():
+            faculty_data = df_ipk[df_ipk['fakultas'] == faculty]
+            
+            for _, row in faculty_data.iterrows():
+                status = 'Dapat' if row['status_beasiswa'] == 'Ya' else (
+                    f'Tidak (IPK < {min_ipk_beasiswa:.2f})' 
+                    if row['ipk'] < min_ipk_beasiswa 
+                    else 'Tidak (Kuota)'
+                )
+                color = '#2ecc71' if row['status_beasiswa'] == 'Ya' else (
+                    '#e74c3c' if row['ipk'] < min_ipk_beasiswa 
+                    else '#f39c12'
+                )
+                
+                table_data.append([
+                    row['nama'],
+                    row['prodi'],
+                    row['tahun_masuk'],
+                    f"{row['ipk']:.2f}",
+                    status,
+                    color
+                ])
+        
+        columns = ['Nama', 'Prodi', 'Tahun', 'IPK', 'Status', 'color']
+        table = ax4.table(
+            cellText=[row[:-1] for row in table_data],
+            colLabels=columns[:-1],
+            cellColours=[[row[-1]]*5 for row in table_data],
+            loc='center',
+            cellLoc='center'
+        )
+        table.auto_set_font_size(False)
+        table.set_fontsize(8)
+        table.scale(1, 0.7)
+        
+        plt.tight_layout()
+        plt.show()
+        
+        
+        # =============================================
+        # 2. DETAILED SCHOLARSHIP ANALYSIS
+        # =============================================
+        fig = plt.figure(figsize=(18, 8))
+        plt.suptitle('ANALISIS DETAIL KELULUSAN BEASISWA', y=1.02, fontsize=16, fontweight='bold')
+        
+        gs = gridspec.GridSpec(1, 2, width_ratios=[2, 1])
+        ax1 = plt.subplot(gs[0, 0])
+        ax2 = plt.subplot(gs[0, 1])
+        
+        # --------------------------
+        # IPK vs Scholarship Status
+        # --------------------------
+        sns.boxplot(x='fakultas', y='ipk', hue='status_beasiswa',
+                   data=df_ipk, palette={'Ya':'#27ae60', 'Tidak':'#e74c3c'},
+                   ax=ax1)
+        
+        # Add threshold line and annotations
+        ax1.axhline(y=min_ipk_beasiswa, color='#f39c12', linestyle='--', linewidth=2)
+        ax1.text(0.5, min_ipk_beasiswa+0.05, 
+                f"BATAS MINIMUM IPK UNTUK BEASISWA: {min_ipk_beasiswa:.2f}",
+                color='#f39c12', fontweight='bold', ha='center')
+        
+        # Add reasons for not getting scholarship
+        for i, faculty in enumerate(df_ipk['fakultas'].unique()):
+            faculty_data = df_ipk[df_ipk['fakultas'] == faculty]
+            tanpa_beasiswa = faculty_data[faculty_data['status_beasiswa'] == 'Tidak']
+            
+            below_threshold = len(tanpa_beasiswa[tanpa_beasiswa['ipk'] < min_ipk_beasiswa])
+            above_threshold = len(tanpa_beasiswa[tanpa_beasiswa['ipk'] >= min_ipk_beasiswa])
+            
+            ax1.text(i, 1.7, 
+                    f"Tidak dapat:\n"
+                    f"- IPK < {min_ipk_beasiswa:.2f}: {below_threshold} mhs\n"
+                    f"- Kuota penuh: {above_threshold} mhs",
+                    ha='center', va='center', fontsize=9,
+                    bbox=dict(facecolor='white', alpha=0.8, edgecolor='gray'))
+        
+        ax1.set_title('PERBANDINGAN IPK PENERIMA DAN NON-PENERIMA BEASISWA', pad=15, fontsize=12)
+        ax1.set_xlabel('Fakultas', fontsize=12)
+        ax1.set_ylabel('IPK', fontsize=12)
+        ax1.legend(title='Status Beasiswa')
+        
+        # --------------------------
+        # Scholarship Eligibility Analysis
+        # --------------------------
+        # Prepare data
+        df_eligible = df_ipk.copy()
+        df_eligible['status'] = np.where(
+            df_eligible['status_beasiswa'] == 'Ya', 'Dapat Beasiswa',
+            np.where(
+                df_eligible['ipk'] < min_ipk_beasiswa, 
+                f'Tidak Lulus (IPK < {min_ipk_beasiswa:.2f})', 
+                'Tidak Lulus (Kuota Penuh)'
+            )
+        )
+        
+        status_counts = df_eligible.groupby(['fakultas', 'status']).size().unstack()
+        
+        # Plot
+        status_counts.plot(kind='barh', stacked=True, 
+                         color=['#27ae60', '#e74c3c', '#f39c12'],
+                         ax=ax2)
+        
+        # Add annotations
+        for i, (idx, row) in enumerate(status_counts.iterrows()):
+            total = row.sum()
+            cumulative = 0
+            for val in row:
+                if val > 0:
+                    ax2.text(cumulative + val/2, i, 
+                            f"{val} ({val/total*100:.1f}%)",
+                            va='center', ha='center',
+                            color='white', fontweight='bold')
+                    cumulative += val
+        
+        ax2.set_title('DETAIL STATUS KELULUSAN BEASISWA', pad=15, fontsize=12)
+        ax2.set_xlabel('Jumlah Mahasiswa', fontsize=12)
+        ax2.set_ylabel('Fakultas', fontsize=12)
+        ax2.legend(title='Keterangan Status')
+        
+        plt.tight_layout()
+        plt.show()
+        
+    except Exception as e:
+        print(f"Error dalam visualisasi data: {e}")
+        raise
 
 # =============================================
 # PROGRAM UTAMA
