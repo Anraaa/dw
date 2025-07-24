@@ -4,9 +4,9 @@ namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\FaktaBeasiswaResource\Pages;
 use App\Models\FaktaBeasiswa;
-use App\Models\DimMahasiswa;   // Import DimMahasiswa for relationships
-use App\Models\DimBeasiswa;    // Import DimBeasiswa for relationships
-use App\Models\DimSemester;   // Import DimSemester for relationships
+use App\Models\DimMahasiswa;
+use App\Models\DimBeasiswa;
+use App\Models\DimSemester;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -14,19 +14,22 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Tables\Filters\SelectFilter; // Ensure this is imported
-use Filament\Tables\Filters\Filter;       // Ensure this is imported
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use pxlrbt\FilamentExcel\Columns\Column; // Make sure this is imported!
 
 class FaktaBeasiswaResource extends Resource
 {
     protected static ?string $model = FaktaBeasiswa::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-currency-dollar'; // Icon for financial/award data
-    protected static ?string $modelLabel = 'Alokasi Beasiswa'; // Custom singular label
-    protected static ?string $pluralModelLabel = 'Alokasi Beasiswa'; // Custom plural label
-    protected static ?string $navigationLabel = 'Alokasi Beasiswa'; // Custom navigation label
-    protected static ?string $navigationGroup = 'Data Akademik'; // Group with other academic data
-    protected static ?int $navigationSort = 7; // Order within the group
+    protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
+    protected static ?string $modelLabel = 'Alokasi Beasiswa';
+    protected static ?string $pluralModelLabel = 'Alokasi Beasiswa';
+    protected static ?string $navigationLabel = 'Alokasi Beasiswa';
+    protected static ?int $navigationSort = 7;
+    protected static ?string $navigationGroup = 'Data Akademik';
 
     public static function form(Form $form): Form
     {
@@ -37,7 +40,7 @@ class FaktaBeasiswaResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('id_mahasiswa')
                             ->label('Mahasiswa Penerima')
-                            ->relationship('mahasiswa', 'nama') // Assumes 'mahasiswa' relationship in FaktaBeasiswa model
+                            ->relationship('mahasiswa', 'nama')
                             ->getOptionLabelUsing(fn (DimMahasiswa $record) => "{$record->nim} - {$record->nama}")
                             ->searchable()
                             ->preload()
@@ -45,7 +48,7 @@ class FaktaBeasiswaResource extends Resource
 
                         Forms\Components\Select::make('id_beasiswa')
                             ->label('Jenis Beasiswa')
-                            ->relationship('beasiswa', 'nama_beasiswa') // Assumes 'beasiswa' relationship in FaktaBeasiswa model
+                            ->relationship('beasiswa', 'nama_beasiswa')
                             ->getOptionLabelUsing(fn (DimBeasiswa $record) => "{$record->nama_beasiswa} ({$record->jenis_beasiswa})")
                             ->searchable()
                             ->preload()
@@ -53,11 +56,11 @@ class FaktaBeasiswaResource extends Resource
 
                         Forms\Components\Select::make('id_semester')
                             ->label('Semester Pemberian')
-                            ->relationship('semester', 'tahun_ajaran') // Assumes 'semester' relationship in FaktaBeasiswa model
+                            ->relationship('semester', 'tahun_ajaran')
                             ->getOptionLabelUsing(fn (DimSemester $record) => "{$record->tahun_ajaran} - {$record->semester}")
                             ->searchable()
                             ->preload()
-                            ->nullable(), // Nullable as per migration
+                            ->nullable(),
 
                         Forms\Components\TextInput::make('ipk_saat_penerimaan')
                             ->label('IPK Saat Penerimaan')
@@ -111,11 +114,11 @@ class FaktaBeasiswaResource extends Resource
                             ->label('Jumlah Bantuan (Rp)')
                             ->numeric()
                             ->minValue(0)
-                            ->suffix('Rp') // Tambahkan suffix Rupiah
+                            ->suffix('Rp')
                             ->placeholder('Contoh: 2500000.00')
                             ->nullable(),
                     ])
-                    ->columns(2), // Arrange fields in 2 columns
+                    ->columns(2),
             ]);
     }
 
@@ -123,18 +126,18 @@ class FaktaBeasiswaResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('mahasiswa.nama') // Display Mahasiswa's Name
+                Tables\Columns\TextColumn::make('mahasiswa.nama')
                     ->label('Mahasiswa')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('beasiswa.nama_beasiswa') // Display Beasiswa Name
+                Tables\Columns\TextColumn::make('beasiswa.nama_beasiswa')
                     ->label('Nama Beasiswa')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('semester.tahun_ajaran') // Display Semester TA
+                Tables\Columns\TextColumn::make('semester.tahun_ajaran')
                     ->label('Tahun Ajaran')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('semester.semester') // Display Semester Name
+                Tables\Columns\TextColumn::make('semester.semester')
                     ->label('Semester')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('ipk_saat_penerimaan')
@@ -154,16 +157,16 @@ class FaktaBeasiswaResource extends Resource
                     ->suffix(' SKS'),
                 Tables\Columns\TextColumn::make('tanggal_penerimaan')
                     ->label('Tanggal Terima')
-                    ->date('d M Y') // Format date
+                    ->date('d M Y')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('tanggal_berakhir')
                     ->label('Tanggal Berakhir')
                     ->date('d M Y')
                     ->sortable()
-                    ->placeholder('N/A'), // Tampilkan N/A jika null
+                    ->placeholder('N/A'),
                 Tables\Columns\TextColumn::make('status_pemberian')
                     ->label('Status')
-                    ->badge() // Tampilkan sebagai badge
+                    ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'Aktif' => 'success',
                         'Selesai' => 'gray',
@@ -177,8 +180,8 @@ class FaktaBeasiswaResource extends Resource
                     ->label('Jumlah Bantuan')
                     ->numeric()
                     ->sortable()
-                    ->money('IDR', locale: 'id') // Format sebagai mata uang Rupiah
-                    ->placeholder('Tidak Ada'), // Tampilkan jika null
+                    ->money('IDR', locale: 'id')
+                    ->placeholder('Tidak Ada'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d M Y, H:i')
@@ -190,7 +193,7 @@ class FaktaBeasiswaResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->defaultSort('tanggal_penerimaan', 'desc') // Default sort by most recent allocation
+            ->defaultSort('tanggal_penerimaan', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('id_mahasiswa')
                     ->label('Filter per Mahasiswa')
@@ -260,7 +263,71 @@ class FaktaBeasiswaResource extends Resource
                                 fn (Builder $query, $date): Builder => $query->whereDate('tanggal_penerimaan', '<=', $date),
                             );
                     }),
-                // Tables\Filters\TrashedFilter::make(), // Uncomment if you use Soft Deletes
+            ])
+            ->headerActions([
+                ExportAction::make()
+                    ->exports([
+                        ExcelExport::make('fakta_beasiswa')
+                            ->fromModel(FaktaBeasiswa::class)
+                            // Eager loading is handled in the FaktaBeasiswa model's $with property.
+                            ->withFilename('alokasi_beasiswa_' . now()->format('Ymd_His'))
+                            ->withWriterType(\Maatwebsite\Excel\Excel::XLSX)
+                            ->withColumns([
+                                Column::make('id')->heading('ID'),
+
+                                // Mahasiswa details
+                                Column::make('mahasiswa.nim')
+                                    ->heading('NIM Mahasiswa')
+                                    ->formatStateUsing(fn ($state) => $state ?? 'N/A'), // Use formatStateUsing for default
+                                Column::make('mahasiswa.nama')
+                                    ->heading('Nama Mahasiswa')
+                                    ->formatStateUsing(fn ($state) => $state ?? 'N/A'), // Use formatStateUsing for default
+                                Column::make('mahasiswa.prodi')
+                                    ->heading('Prodi Mahasiswa')
+                                    ->formatStateUsing(fn ($state) => $state ?? 'N/A'), // Use formatStateUsing for default
+
+                                // Beasiswa details
+                                Column::make('beasiswa.nama_beasiswa')
+                                    ->heading('Nama Beasiswa')
+                                    ->formatStateUsing(fn ($state) => $state ?? 'N/A'), // Use formatStateUsing for default
+                                Column::make('beasiswa.jenis_beasiswa')
+                                    ->heading('Jenis Beasiswa')
+                                    ->formatStateUsing(fn ($state) => $state ?? 'N/A'), // Use formatStateUsing for default
+
+                                // Semester details
+                                Column::make('semester.tahun_ajaran')
+                                    ->heading('Tahun Ajaran')
+                                    ->formatStateUsing(fn ($state) => $state ?? 'N/A'), // Use formatStateUsing for default
+                                Column::make('semester.semester')
+                                    ->heading('Semester')
+                                    ->formatStateUsing(fn ($state) => $state ?? 'N/A'), // Use formatStateUsing for default
+
+                                // Fakta Beasiswa attributes (already had formatStateUsing, but adding for completeness)
+                                Column::make('ipk_saat_penerimaan')->heading('IPK Saat Terima'),
+                                Column::make('sks_saat_penerimaan')->heading('SKS Saat Terima'),
+                                Column::make('tanggal_penerimaan')
+                                    ->heading('Tanggal Penerimaan')
+                                    ->formatStateUsing(fn ($state) => $state ? \Carbon\Carbon::parse($state)->format('d M Y') : 'N/A'),
+                                Column::make('tanggal_berakhir')
+                                    ->heading('Tanggal Berakhir')
+                                    ->formatStateUsing(fn ($state) => $state ? \Carbon\Carbon::parse($state)->format('d M Y') : 'N/A'),
+                                Column::make('status_pemberian')->heading('Status Pemberian'),
+                                Column::make('sumber_dana')
+                                    ->heading('Sumber Dana')
+                                    ->formatStateUsing(fn ($state) => $state ?? 'N/A'), // Use formatStateUsing for default
+                                Column::make('jumlah_bantuan')
+                                    ->heading('Jumlah Bantuan (Rp)')
+                                    ->formatStateUsing(fn ($state) => $state ?? '0'), // Use formatStateUsing for default numeric '0'
+
+                                // Timestamps
+                                Column::make('created_at')
+                                    ->heading('Dibuat Pada')
+                                    ->formatStateUsing(fn ($state) => $state ? \Carbon\Carbon::parse($state)->format('d M Y, H:i') : 'N/A'),
+                                Column::make('updated_at')
+                                    ->heading('Diperbarui Pada')
+                                    ->formatStateUsing(fn ($state) => $state ? \Carbon\Carbon::parse($state)->format('d M Y, H:i') : 'N/A'),
+                            ]),
+                    ]),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
@@ -277,7 +344,7 @@ class FaktaBeasiswaResource extends Resource
             ->emptyStateActions([
                 Tables\Actions\CreateAction::make(),
             ])
-            ->groups([ // Grouping options for the table
+            ->groups([
                 Tables\Grouping\Group::make('beasiswa.nama_beasiswa')
                     ->label('Berdasarkan Beasiswa')
                     ->collapsible(),
@@ -292,9 +359,7 @@ class FaktaBeasiswaResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            // No direct relations manager needed for a fact table unless you want to see specific dimensions
-        ];
+        return [];
     }
 
     public static function getPages(): array
@@ -313,6 +378,6 @@ class FaktaBeasiswaResource extends Resource
 
     public static function getNavigationBadgeColor(): ?string
     {
-        return static::getModel()::where('status_pemberian', 'Aktif')->count() > 0 ? 'success' : 'gray'; // Badge hijau jika ada alokasi aktif
+        return static::getModel()::where('status_pemberian', 'Aktif')->count() > 0 ? 'success' : 'gray';
     }
 }
